@@ -95,6 +95,22 @@ export async function deleteTemplate(id: number) {
   await query("DELETE FROM templates WHERE id=$1", [id]);
 }
 
+export async function duplicateTemplate(id: number): Promise<number> {
+  const src = await getTemplate(id);
+  if (!src) throw new Error("Template not found");
+  return createTemplate({
+    name: `${src.name} (Copy)`,
+    description: src.description,
+    tasks: src.tasks.map((t) => ({
+      name: t.name,
+      subtasks: t.subtasks.map((st) => ({
+        name: st.name,
+        estimate_days: Number(st.estimate_days) || 0,
+      })),
+    })),
+  });
+}
+
 // ---------- Projects ----------
 
 export async function listProjects() {
@@ -195,6 +211,24 @@ async function insertProjectTasks(c: any, projectId: number, tasks: Task[]) {
 
 export async function deleteProject(id: number) {
   await query("DELETE FROM projects WHERE id=$1", [id]);
+}
+
+export async function duplicateProject(id: number): Promise<number> {
+  const src = await getProject(id);
+  if (!src) throw new Error("Project not found");
+  return createProject({
+    name: `${src.name} (Copy)`,
+    client: src.client,
+    description: src.description,
+    status: "Draft",
+    tasks: src.tasks.map((t) => ({
+      name: t.name,
+      subtasks: t.subtasks.map((st) => ({
+        name: st.name,
+        estimate_days: Number(st.estimate_days) || 0,
+      })),
+    })),
+  });
 }
 
 // ---------- Dashboard ----------

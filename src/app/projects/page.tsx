@@ -9,6 +9,7 @@ import { Card, PageHeader, Button, Badge, days } from "@/components/ui";
 export default function ProjectsPage() {
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
   const router = useRouter();
 
   async function load() {
@@ -26,6 +27,17 @@ export default function ProjectsPage() {
     if (!confirm("Delete this project?")) return;
     await api.del(`/api/projects/${id}`);
     load();
+  }
+
+  async function duplicate(id: number) {
+    setBusyId(id);
+    try {
+      const { id: newId } = await api.post(`/api/projects/${id}/duplicate`, {});
+      router.push(`/projects/${newId}`);
+    } catch (e: any) {
+      setError(e.message);
+      setBusyId(null);
+    }
   }
 
   return (
@@ -95,6 +107,13 @@ export default function ProjectsPage() {
                       <Link href={`/projects/${p.id}`}>
                         <Button variant="secondary">Edit</Button>
                       </Link>
+                      <Button
+                        variant="secondary"
+                        onClick={() => duplicate(p.id)}
+                        disabled={busyId === p.id}
+                      >
+                        {busyId === p.id ? "Copying..." : "Duplicate"}
+                      </Button>
                       <Button variant="danger" onClick={() => remove(p.id)}>
                         Delete
                       </Button>

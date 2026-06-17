@@ -9,6 +9,7 @@ import { Card, PageHeader, Button, days } from "@/components/ui";
 export default function TemplatesPage() {
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
   const router = useRouter();
 
   async function load() {
@@ -27,6 +28,17 @@ export default function TemplatesPage() {
     if (!confirm("Delete this template?")) return;
     await api.del(`/api/templates/${id}`);
     load();
+  }
+
+  async function duplicate(id: number) {
+    setBusyId(id);
+    try {
+      const { id: newId } = await api.post(`/api/templates/${id}/duplicate`, {});
+      router.push(`/templates/${newId}`);
+    } catch (e: any) {
+      setError(e.message);
+      setBusyId(null);
+    }
   }
 
   return (
@@ -80,6 +92,13 @@ export default function TemplatesPage() {
                 <Link href={`/templates/${t.id}`}>
                   <Button variant="secondary">Edit</Button>
                 </Link>
+                <Button
+                  variant="secondary"
+                  onClick={() => duplicate(t.id)}
+                  disabled={busyId === t.id}
+                >
+                  {busyId === t.id ? "Copying..." : "Duplicate"}
+                </Button>
                 <Button variant="danger" onClick={() => remove(t.id)}>
                   Delete
                 </Button>
