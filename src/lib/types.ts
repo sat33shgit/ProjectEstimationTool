@@ -8,7 +8,7 @@ export interface Subtask {
 export interface Task {
   id?: number;
   name: string;
-  category: string;
+  category?: string; // kept for backward-compat; mirrors task name on save
   sort_order?: number;
   subtasks: Subtask[];
 }
@@ -49,7 +49,8 @@ export interface DashboardData {
   total_days: number;
   avg_days: number;
   projects: ProjectSummary[];
-  by_category: { category: string; days: number }[];
+  by_task: { task: string; days: number }[];
+  by_project_task: Record<number, { task: string; days: number }[]>;
 }
 
 export function taskTotal(task: Task): number {

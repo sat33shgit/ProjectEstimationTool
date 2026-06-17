@@ -78,7 +78,7 @@ async function insertTemplateTasks(c: any, templateId: number, tasks: Task[]) {
     const task = tasks[ti];
     const tt = await c.query(
       "INSERT INTO template_tasks (template_id, name, category, sort_order) VALUES ($1,$2,$3,$4) RETURNING id",
-      [templateId, task.name, task.category || "General", ti]
+      [templateId, task.name, task.name, ti]
     );
     const taskId = tt.rows[0].id;
     for (let si = 0; si < (task.subtasks || []).length; si++) {
@@ -180,7 +180,7 @@ async function insertProjectTasks(c: any, projectId: number, tasks: Task[]) {
     const task = tasks[ti];
     const tt = await c.query(
       "INSERT INTO project_tasks (project_id, name, category, sort_order) VALUES ($1,$2,$3,$4) RETURNING id",
-      [projectId, task.name, task.category || "General", ti]
+      [projectId, task.name, task.name, ti]
     );
     const taskId = tt.rows[0].id;
     for (let si = 0; si < (task.subtasks || []).length; si++) {
@@ -212,13 +212,30 @@ export async function getDashboard(): Promise<DashboardData> {
   );
   const avg_days = projects.length ? total_days / projects.length : 0;
 
-  const by_category = await query<any>(
-    `SELECT pt.category AS category, SUM(s.estimate_days)::float AS days
+  // Overall effort by task (across all projects)
+  const by_task = await query<any>(
+    `SELECT pt.name AS task, SUM(s.estimate_days)::float AS days
      FROM project_tasks pt
      JOIN project_subtasks s ON s.project_task_id = pt.id
-     GROUP BY pt.category
+     GROUP BY pt.name
+     ORDER BY days DESC
+     LIMIT 12`
+  );
+
+  // Effort by task per project (used to filter the pie chart when a bar is clicked)
+  const perProjectRows = await query<any>(
+    `SELECT pt.project_id AS project_id, pt.name AS task,
+            SUM(s.estimate_days)::float AS days
+     FROM project_tasks pt
+     JOIN project_subtasks s ON s.project_task_id = pt.id
+     GROUP BY pt.project_id, pt.name
      ORDER BY days DESC`
   );
+  const by_project_task: Record<number, { task: string; days: number }[]> = {};
+  for (const r of perProjectRows as any[]) {
+    const pid = Number(r.project_id);
+    (by_project_task[pid] ||= []).push({ task: r.task, days: Number(r.days) || 0 });
+  }
 
   return {
     project_count: counts?.project_count ?? 0,
@@ -226,7 +243,8 @@ export async function getDashboard(): Promise<DashboardData> {
     total_days,
     avg_days,
     projects: projects as any,
-    by_category,
+    by_task,
+    by_project_task,
   };
 }
 

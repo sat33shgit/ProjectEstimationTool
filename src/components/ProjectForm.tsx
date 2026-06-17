@@ -60,12 +60,6 @@ export default function ProjectForm({
 
   const total = tasksTotal(tasks);
 
-  // Category rollup for the summary panel
-  const byCategory: Record<string, number> = {};
-  tasks.forEach((t) => {
-    byCategory[t.category] = (byCategory[t.category] || 0) + taskTotal(t);
-  });
-
   return (
     <div>
       <PageHeader
@@ -143,13 +137,12 @@ export default function ProjectForm({
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-700">Tasks</h2>
             <Button variant="secondary" onClick={() => setShowImport(true)}>
-              ↧ Import from template
+              Import from template
             </Button>
           </div>
           <TaskEditor tasks={tasks} onChange={setTasks} />
         </div>
 
-        {/* Estimation summary */}
         <div>
           <Card className="p-5 sticky top-8">
             <h3 className="text-sm font-semibold text-gray-700 mb-4">
@@ -163,42 +156,28 @@ export default function ProjectForm({
                 {days(total)}
               </div>
               <div className="mt-1 text-xs text-gray-500">
-                {(total / 5).toFixed(1)} weeks · {tasks.length} tasks
+                {(total / 5).toFixed(1)} weeks &middot; {tasks.length} tasks
               </div>
             </div>
 
-            <div className="space-y-2">
-              {Object.entries(byCategory).length === 0 && (
+            <div className="space-y-1.5">
+              {tasks.length === 0 && (
                 <div className="text-sm text-gray-400">
                   Add tasks to see the breakdown.
                 </div>
               )}
-              {Object.entries(byCategory).map(([cat, d]) => (
+              {tasks.map((t, i) => (
                 <div
-                  key={cat}
+                  key={i}
                   className="flex items-center justify-between text-sm"
                 >
-                  <span className="text-gray-600">{cat}</span>
-                  <span className="font-medium text-gray-900">{days(d)}</span>
+                  <span className="text-gray-600 truncate pr-2">{t.name}</span>
+                  <span className="font-medium text-gray-900">
+                    {days(taskTotal(t))}
+                  </span>
                 </div>
               ))}
             </div>
-
-            {tasks.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-4 space-y-1.5">
-                {tasks.map((t, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="text-gray-500 truncate pr-2">
-                      {t.name}
-                    </span>
-                    <span className="text-gray-700">{days(taskTotal(t))}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </Card>
         </div>
       </div>

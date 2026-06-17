@@ -18,6 +18,7 @@ export default function TemplatesPage() {
       setError(e.message);
     }
   }
+
   useEffect(() => {
     load();
   }, []);
@@ -55,7 +56,7 @@ export default function TemplatesPage() {
             <div className="flex items-start justify-between">
               <div>
                 <Link
-                  href={`/templates/${t.id}`}
+                  href={`/templates/${t.id}/view`}
                   className="text-base font-semibold text-gray-900 hover:text-brand-600"
                 >
                   {t.name}
@@ -67,12 +68,15 @@ export default function TemplatesPage() {
             </div>
             <div className="mt-4 flex items-center justify-between">
               <div className="text-sm text-gray-500">
-                {t.task_count} tasks ·{" "}
+                {t.task_count} tasks &middot;{" "}
                 <span className="font-semibold text-gray-900">
                   {days(t.total_days)}
                 </span>
               </div>
               <div className="flex gap-2">
+                <Link href={`/templates/${t.id}/view`}>
+                  <Button variant="secondary">View</Button>
+                </Link>
                 <Link href={`/templates/${t.id}`}>
                   <Button variant="secondary">Edit</Button>
                 </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BarChart,
@@ -18,12 +18,17 @@ import { api } from "@/lib/api";
 import { Card, PageHeader, Button, Badge, days } from "@/components/ui";
 import type { DashboardData } from "@/lib/types";
 
-const COLORS = ["#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#d97706", "#dc2626", "#db2777"];
+const COLORS = [
+  "#2563eb", "#7c3aed", "#0891b2", "#16a34a", "#d97706",
+  "#dc2626", "#db2777", "#0d9488", "#ca8a04", "#4f46e5",
+  "#65a30d", "#e11d48",
+];
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
 
   async function load() {
     try {
@@ -55,6 +60,37 @@ export default function DashboardPage() {
     error &&
     (error.toLowerCase().includes("does not exist") ||
       error.toLowerCase().includes("relation"));
+
+  const selectedProject = useMemo(
+    () =>
+      data?.projects.find((p) => p.id === selectedProjectId) ?? null,
+    [data, selectedProjectId]
+  );
+
+  // Pie data: filtered to the selected project, else overall.
+  const pieData = useMemo(() => {
+    if (!data) return [];
+    if (selectedProjectId != null) {
+      return (data.by_project_task?.[selectedProjectId] ?? []).map((c) => ({
+        name: c.task,
+        value: Number(c.days) || 0,
+      }));
+    }
+    return data.by_task.map((c) => ({
+      name: c.task,
+      value: Number(c.days) || 0,
+    }));
+  }, [data, selectedProjectId]);
+
+  const barData = useMemo(
+    () =>
+      (data?.projects ?? []).map((p) => ({
+        id: p.id,
+        name: p.name.length > 14 ? p.name.slice(0, 14) + "..." : p.name,
+        days: Number(p.total_days) || 0,
+      })),
+    [data]
+  );
 
   return (
     <div>
@@ -93,42 +129,74 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">
-                Effort by project (days)
-              </h3>
-              {data.projects.length === 0 ? (
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Effort by project (days)
+                </h3>
+                {selectedProjectId != null && (
+                  <button
+                    onClick={() => setSelectedProjectId(null)}
+                    className="text-xs font-medium text-brand-600 hover:underline"
+                  >
+                    Clear selection
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-400 mb-3">
+                Click a bar to break that project down by task.
+              </p>
+              {barData.length === 0 ? (
                 <Empty />
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart
-                    data={data.projects.map((p) => ({
-                      name: p.name.length > 14 ? p.name.slice(0, 14) + "…" : p.name,
-                      days: Number(p.total_days) || 0,
-                    }))}
-                  >
+                  <BarChart data={barData}>
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Bar dataKey="days" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Tooltip cursor={{ fill: "rgba(37,99,235,0.06)" }} />
+                    <Bar
+                      dataKey="days"
+                      radius={[4, 4, 0, 0]}
+                      cursor="pointer"
+                      onClick={(d: any) => {
+                        const clicked = d?.id ?? d?.payload?.id;
+                        setSelectedProjectId((prev) =>
+                          prev === clicked ? null : clicked
+                        );
+                      }}
+                    >
+                      {barData.map((b, i) => (
+                        <Cell
+                          key={b.id}
+                          fill={
+                            selectedProjectId == null ||
+                            selectedProjectId === b.id
+                              ? COLORS[i % COLORS.length]
+                              : "#cbd5e1"
+                          }
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
             </Card>
 
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4">
-                Effort by category (days)
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">
+                Effort by task (days)
               </h3>
-              {data.by_category.length === 0 ? (
+              <p className="text-xs text-gray-400 mb-3">
+                {selectedProject
+                  ? `Filtered to: ${selectedProject.name}`
+                  : "Across all projects"}
+              </p>
+              {pieData.length === 0 ? (
                 <Empty />
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
-                      data={data.by_category.map((c) => ({
-                        name: c.category,
-                        value: Number(c.days) || 0,
-                      }))}
+                      data={pieData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -136,11 +204,11 @@ export default function DashboardPage() {
                       outerRadius={90}
                       label={(e: any) => `${e.name}`}
                     >
-                      {data.by_category.map((_, i) => (
+                      {pieData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip formatter={(v: any) => `${v} days`} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -185,11 +253,19 @@ export default function DashboardPage() {
                   {data.projects.map((p) => (
                     <tr
                       key={p.id}
-                      className="border-b border-gray-50 hover:bg-gray-50"
+                      onClick={() =>
+                        setSelectedProjectId((prev) =>
+                          prev === p.id ? null : p.id
+                        )
+                      }
+                      className={`border-b border-gray-50 cursor-pointer hover:bg-gray-50 ${
+                        selectedProjectId === p.id ? "bg-brand-50" : ""
+                      }`}
                     >
                       <td className="px-5 py-3">
                         <Link
-                          href={`/projects/${p.id}`}
+                          href={`/projects/${p.id}/view`}
+                          onClick={(e) => e.stopPropagation()}
                           className="font-medium text-gray-900 hover:text-brand-600"
                         >
                           {p.name}

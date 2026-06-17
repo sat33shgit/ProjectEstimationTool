@@ -4,6 +4,7 @@
 /build
 .env
 .env*.local
+Additional Files/
 *.log
 .DS_Store
 .vercel

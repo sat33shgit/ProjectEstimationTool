@@ -50,7 +50,7 @@ export default function ImportFromTemplate({
     // strip ids so they insert fresh into the project
     return tasks.map((t) => ({
       name: t.name,
-      category: t.category,
+      category: t.name,
       subtasks: t.subtasks.map((s: any) => ({
         name: s.name,
         estimate_days: Number(s.estimate_days) || 0,
@@ -164,7 +164,7 @@ export default function ImportFromTemplate({
                             {t.name}
                           </div>
                           <div className="text-xs text-gray-400">
-                            {t.category} · {t.subtasks.length} subtasks
+                            {t.subtasks.length} subtasks
                           </div>
                         </div>
                         <span className="text-sm font-semibold text-gray-700">

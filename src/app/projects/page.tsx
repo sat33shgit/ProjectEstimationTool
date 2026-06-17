@@ -71,7 +71,7 @@ export default function ProjectsPage() {
                 <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="px-5 py-3">
                     <Link
-                      href={`/projects/${p.id}`}
+                      href={`/projects/${p.id}/view`}
                       className="font-medium text-gray-900 hover:text-brand-600"
                     >
                       {p.name}
@@ -88,9 +88,17 @@ export default function ProjectsPage() {
                     {days(p.total_days)}
                   </td>
                   <td className="px-5 py-3 text-right">
-                    <Button variant="danger" onClick={() => remove(p.id)}>
-                      Delete
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/projects/${p.id}/view`}>
+                        <Button variant="secondary">View</Button>
+                      </Link>
+                      <Link href={`/projects/${p.id}`}>
+                        <Button variant="secondary">Edit</Button>
+                      </Link>
+                      <Button variant="danger" onClick={() => remove(p.id)}>
+                        Delete
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
