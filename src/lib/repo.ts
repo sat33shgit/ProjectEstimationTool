@@ -266,7 +266,6 @@ export async function getDashboard(): Promise<DashboardData> {
   );
   const avg_days = projects.length ? total_days / projects.length : 0;
 
-  // Overall effort by task (across all projects)
   const by_task = await query<any>(
     `SELECT pt.name AS task, SUM(s.estimate_days)::float AS days
      FROM project_tasks pt
@@ -276,7 +275,6 @@ export async function getDashboard(): Promise<DashboardData> {
      LIMIT 12`
   );
 
-  // Effort by task per project (used to filter the pie chart when a bar is clicked)
   const perProjectRows = await query<any>(
     `SELECT pt.project_id AS project_id, pt.name AS task,
             SUM(s.estimate_days)::float AS days

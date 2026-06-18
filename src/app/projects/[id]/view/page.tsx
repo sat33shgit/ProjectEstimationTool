@@ -58,7 +58,6 @@ export default function ViewProjectPage() {
   if (!proj) return <div className="text-sm text-gray-400">Loading...</div>;
 
   const total = tasksTotal(proj.tasks);
-  // rates are per-hour; 1 day = 8 hours
   const effectiveHourlyRate = proj.bill_rate_override != null ? Number(proj.bill_rate_override) : globalRate;
   const totalCost = total * effectiveHourlyRate * 8;
 
@@ -113,10 +112,7 @@ export default function ViewProjectPage() {
         <Stat label="Tasks" value={proj.tasks.length} />
         <Stat
           label="Subtasks"
-          value={proj.tasks.reduce(
-            (n: number, t: Task) => n + t.subtasks.length,
-            0
-          )}
+          value={proj.tasks.reduce((n: number, t: Task) => n + t.subtasks.length, 0)}
         />
         <Stat label="Total estimate" value={days(total)} />
         <Stat
@@ -145,9 +141,7 @@ export default function ViewProjectPage() {
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <Card className="p-4">
-      <div className="text-xs uppercase tracking-wide text-gray-400">
-        {label}
-      </div>
+      <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
       <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
     </Card>
   );

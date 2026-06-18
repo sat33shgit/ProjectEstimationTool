@@ -52,7 +52,6 @@ export default function ProjectForm({
     overrideRaw.trim() !== "" && !isNaN(Number(overrideRaw))
       ? Number(overrideRaw)
       : globalRate;
-  const effectiveRate = effectiveHourlyRate; // alias kept for save logic
 
   function handleImport(imported: Task[]) {
     setTasks((prev) => [...prev, ...imported]);
@@ -84,7 +83,7 @@ export default function ProjectForm({
   }
 
   const total = tasksTotal(tasks);
-  const totalCost = total * effectiveHourlyRate * 8; // days × 8 hrs × $/hr
+  const totalCost = total * effectiveHourlyRate * 8;
 
   return (
     <div>

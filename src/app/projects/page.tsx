@@ -27,6 +27,7 @@ export default function ProjectsPage() {
       setError(e.message);
     }
   }
+
   useEffect(() => {
     load();
     api.get("/api/settings").then((d) => setGlobalRate(Number(d.bill_rate) || 100));
@@ -150,9 +151,7 @@ export default function ProjectsPage() {
                     </Link>
                   </td>
                   <td className="px-5 py-3 text-gray-500">{p.client || "—"}</td>
-                  <td className="px-5 py-3 text-right text-gray-600">
-                    {p.task_count}
-                  </td>
+                  <td className="px-5 py-3 text-right text-gray-600">{p.task_count}</td>
                   <td className="px-5 py-3 text-right font-semibold text-gray-900">
                     {days(p.total_days)}
                   </td>
@@ -177,10 +176,7 @@ export default function ProjectsPage() {
                       >
                         {busyId === p.id ? "Copying..." : "Duplicate"}
                       </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => openSaveAsTemplate(p)}
-                      >
+                      <Button variant="secondary" onClick={() => openSaveAsTemplate(p)}>
                         Save as Template
                       </Button>
                       <Button variant="danger" onClick={() => remove(p.id)}>

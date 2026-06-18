@@ -13,10 +13,9 @@ import {
   Pie,
   Cell,
   Legend,
-  LabelList,
 } from "recharts";
 import { api } from "@/lib/api";
-import { Card, PageHeader, Button, Badge, days } from "@/components/ui";
+import { Card, PageHeader, Button, days } from "@/components/ui";
 import type { DashboardData } from "@/lib/types";
 
 const COLORS = [
@@ -244,7 +243,6 @@ export default function DashboardPage() {
                   <tr className="border-y border-gray-100 text-left text-gray-500">
                     <th className="px-5 py-2 font-medium">Project</th>
                     <th className="px-5 py-2 font-medium">Client</th>
-                    <th className="px-5 py-2 font-medium">Status</th>
                     <th className="px-5 py-2 font-medium text-right">Tasks</th>
                     <th className="px-5 py-2 font-medium text-right">
                       Total days
@@ -254,7 +252,7 @@ export default function DashboardPage() {
                 <tbody>
                   {data.projects.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-gray-400">
+                      <td colSpan={4} className="px-5 py-8 text-center text-gray-400">
                         No projects yet.{" "}
                         <Link href="/projects" className="text-brand-600 underline">
                           Create one
@@ -287,9 +285,6 @@ export default function DashboardPage() {
                       <td className="px-5 py-3 text-gray-500">
                         {p.client || "—"}
                       </td>
-                      <td className="px-5 py-3">
-                        <Badge>{p.status}</Badge>
-                      </td>
                       <td className="px-5 py-3 text-right text-gray-600">
                         {p.task_count}
                       </td>
@@ -310,19 +305,17 @@ export default function DashboardPage() {
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <Card className="p-5">
-      <div className="text-xs uppercase tracking-wide text-gray-400">
-        {label}
-      </div>
-      <div className="mt-2 text-2xl font-semibold text-gray-900">{value}</div>
+    <Card className="p-4">
+      <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
+      <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
     </Card>
   );
 }
 
 function Empty() {
   return (
-    <div className="flex h-[260px] items-center justify-center text-sm text-gray-400">
-      No data yet
+    <div className="flex items-center justify-center h-40 text-sm text-gray-400">
+      No data yet.
     </div>
   );
 }
