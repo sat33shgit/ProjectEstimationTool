@@ -90,7 +90,7 @@ export async function updateTemplate(
   });
 }
 
-async function insertTemplateTasks(c: any, templateId: number, tasks: Task[]) {
+async function insertTemplateTasks(c: import('pg').PoolClient, templateId: number, tasks: Task[]) {
   for (let ti = 0; ti < tasks.length; ti++) {
     const task = tasks[ti];
     const tt = await c.query(
@@ -211,7 +211,7 @@ export async function updateProject(
   });
 }
 
-async function insertProjectTasks(c: any, projectId: number, tasks: Task[]) {
+async function insertProjectTasks(c: import('pg').PoolClient, projectId: number, tasks: Task[]) {
   for (let ti = 0; ti < tasks.length; ti++) {
     const task = tasks[ti];
     const tt = await c.query(
@@ -284,7 +284,7 @@ export async function getDashboard(): Promise<DashboardData> {
      ORDER BY days DESC`
   );
   const by_project_task: Record<number, { task: string; days: number }[]> = {};
-  for (const r of perProjectRows as any[]) {
+  for (const r of perProjectRows) {
     const pid = Number(r.project_id);
     (by_project_task[pid] ||= []).push({ task: r.task, days: Number(r.days) || 0 });
   }

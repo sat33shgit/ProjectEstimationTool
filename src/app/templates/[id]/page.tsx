@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
+import type { Template } from "@/lib/types";
 import TemplateForm from "@/components/TemplateForm";
 
 export default function EditTemplatePage() {
   const params = useParams();
   const id = Number(params.id);
-  const [initial, setInitial] = useState<any>(null);
+  const [initial, setInitial] = useState<Template | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

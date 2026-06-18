@@ -39,19 +39,19 @@ export default function ImportFromTemplate({
         setDetail(d);
         // default: all tasks checked
         const init: Record<number, boolean> = {};
-        d.tasks.forEach((_: any, i: number) => (init[i] = true));
+        d.tasks.forEach((_: Task, i: number) => (init[i] = true));
         setChecked(init);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [selectedId]);
 
-  function toClonedTasks(tasks: any[]): Task[] {
+  function toClonedTasks(tasks: Task[]): Task[] {
     // strip ids so they insert fresh into the project
     return tasks.map((t) => ({
       name: t.name,
       category: t.name,
-      subtasks: t.subtasks.map((s: any) => ({
+      subtasks: t.subtasks.map((s) => ({
         name: s.name,
         estimate_days: Number(s.estimate_days) || 0,
       })),
@@ -60,7 +60,7 @@ export default function ImportFromTemplate({
 
   function importSelected() {
     if (!detail) return;
-    const picked = detail.tasks.filter((_: any, i: number) => checked[i]);
+    const picked = detail.tasks.filter((_: Task, i: number) => checked[i]);
     if (picked.length === 0) {
       setError("Select at least one task to import.");
       return;
@@ -74,7 +74,7 @@ export default function ImportFromTemplate({
   }
 
   const allChecked =
-    detail && detail.tasks.length > 0 && detail.tasks.every((_: any, i: number) => checked[i]);
+    detail && detail.tasks.length > 0 && detail.tasks.every((_: Task, i: number) => checked[i]);
 
   function toggleAll() {
     if (!detail) return;
@@ -179,7 +179,7 @@ export default function ImportFromTemplate({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 p-5">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t border-gray-100 p-4 sm:p-5">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>

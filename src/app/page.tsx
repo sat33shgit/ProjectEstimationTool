@@ -40,9 +40,7 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function initDb() {
     setInitializing(true);
@@ -62,12 +60,10 @@ export default function DashboardPage() {
       error.toLowerCase().includes("relation"));
 
   const selectedProject = useMemo(
-    () =>
-      data?.projects.find((p) => p.id === selectedProjectId) ?? null,
+    () => data?.projects.find((p) => p.id === selectedProjectId) ?? null,
     [data, selectedProjectId]
   );
 
-  // Pie data: filtered to the selected project, else overall.
   const pieData = useMemo(() => {
     if (!data) return [];
     if (selectedProjectId != null) {
@@ -101,11 +97,11 @@ export default function DashboardPage() {
 
       {needsSetup && (
         <Card className="mb-6 p-4 bg-amber-50 border-amber-200">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="text-sm text-amber-800">
               The database tables aren&apos;t set up yet. Click to create them.
             </div>
-            <Button onClick={initDb} disabled={initializing}>
+            <Button onClick={initDb} disabled={initializing} className="shrink-0">
               {initializing ? "Setting up..." : "Initialize database"}
             </Button>
           </div>
@@ -120,15 +116,17 @@ export default function DashboardPage() {
 
       {data && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+          {/* Stats grid — 2 cols on mobile, 4 on sm+ */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Stat label="Projects" value={data.project_count} />
             <Stat label="Templates" value={data.template_count} />
             <Stat label="Total estimated" value={days(data.total_days)} />
             <Stat label="Avg / project" value={days(data.avg_days)} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <Card className="p-5">
+          {/* Charts — stack on mobile, side-by-side on lg */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <Card className="p-4 sm:p-5">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-semibold text-gray-700">
                   Effort by project (days)
@@ -138,7 +136,7 @@ export default function DashboardPage() {
                     onClick={() => setSelectedProjectId(null)}
                     className="text-xs font-medium text-brand-600 hover:underline"
                   >
-                    Clear selection
+                    Clear
                   </button>
                 )}
               </div>
@@ -148,13 +146,13 @@ export default function DashboardPage() {
               {barData.length === 0 ? (
                 <Empty />
               ) : (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={barData}>
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} width={28} />
                     <Tooltip cursor={{ fill: "rgba(37,99,235,0.06)" }} />
                     <Legend
-                      wrapperStyle={{ fontSize: 11 }}
+                      wrapperStyle={{ fontSize: 10 }}
                       payload={barData.map((b, i) => ({
                         value: b.name,
                         type: "square" as const,
@@ -179,8 +177,7 @@ export default function DashboardPage() {
                         <Cell
                           key={b.id}
                           fill={
-                            selectedProjectId == null ||
-                            selectedProjectId === b.id
+                            selectedProjectId == null || selectedProjectId === b.id
                               ? COLORS[i % COLORS.length]
                               : "#cbd5e1"
                           }
@@ -192,7 +189,7 @@ export default function DashboardPage() {
               )}
             </Card>
 
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <h3 className="text-sm font-semibold text-gray-700 mb-1">
                 Effort by task (days)
               </h3>
@@ -204,15 +201,15 @@ export default function DashboardPage() {
               {pieData.length === 0 ? (
                 <Empty />
               ) : (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
                       data={pieData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
-                      cy="50%"
-                      outerRadius={90}
+                      cy="45%"
+                      outerRadius={75}
                       label={(e: any) => `${e.name} (${(e.value * 8).toFixed(0)}h)`}
                       labelLine={true}
                     >
@@ -221,32 +218,29 @@ export default function DashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip formatter={(v: any) => [`${v} days (${(Number(v) * 8).toFixed(0)}h)`, "Effort"]} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
             </Card>
           </div>
 
+          {/* Projects table — scrollable on mobile */}
           <Card>
-            <div className="flex items-center justify-between p-5 pb-3">
-              <h3 className="text-sm font-semibold text-gray-700">
-                All projects
-              </h3>
+            <div className="flex items-center justify-between p-4 sm:p-5 pb-3">
+              <h3 className="text-sm font-semibold text-gray-700">All projects</h3>
               <Link href="/projects">
                 <Button variant="secondary">View all</Button>
               </Link>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-y border-gray-100 text-left text-gray-500">
-                    <th className="px-5 py-2 font-medium">Project</th>
-                    <th className="px-5 py-2 font-medium">Client</th>
-                    <th className="px-5 py-2 font-medium text-right">Tasks</th>
-                    <th className="px-5 py-2 font-medium text-right">
-                      Total days
-                    </th>
+                    <th className="px-4 sm:px-5 py-2 font-medium">Project</th>
+                    <th className="px-4 sm:px-5 py-2 font-medium">Client</th>
+                    <th className="px-4 sm:px-5 py-2 font-medium text-right">Tasks</th>
+                    <th className="px-4 sm:px-5 py-2 font-medium text-right">Total days</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -256,8 +250,7 @@ export default function DashboardPage() {
                         No projects yet.{" "}
                         <Link href="/projects" className="text-brand-600 underline">
                           Create one
-                        </Link>
-                        .
+                        </Link>.
                       </td>
                     </tr>
                   )}
@@ -273,7 +266,7 @@ export default function DashboardPage() {
                         selectedProjectId === p.id ? "bg-brand-50" : ""
                       }`}
                     >
-                      <td className="px-5 py-3">
+                      <td className="px-4 sm:px-5 py-3">
                         <Link
                           href={`/projects/${p.id}/view`}
                           onClick={(e) => e.stopPropagation()}
@@ -282,13 +275,9 @@ export default function DashboardPage() {
                           {p.name}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 text-gray-500">
-                        {p.client || "—"}
-                      </td>
-                      <td className="px-5 py-3 text-right text-gray-600">
-                        {p.task_count}
-                      </td>
-                      <td className="px-5 py-3 text-right font-semibold text-gray-900">
+                      <td className="px-4 sm:px-5 py-3 text-gray-500">{p.client || "—"}</td>
+                      <td className="px-4 sm:px-5 py-3 text-right text-gray-600">{p.task_count}</td>
+                      <td className="px-4 sm:px-5 py-3 text-right font-semibold text-gray-900">
                         {days(p.total_days)}
                       </td>
                     </tr>
@@ -305,9 +294,9 @@ export default function DashboardPage() {
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <Card className="p-4">
+    <Card className="p-3 sm:p-4">
       <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
+      <div className="mt-1 text-lg sm:text-xl font-semibold text-gray-900">{value}</div>
     </Card>
   );
 }

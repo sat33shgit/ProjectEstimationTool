@@ -1,34 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
-import { Card, PageHeader, Button, days } from "@/components/ui";
-import TaskAccordion from "@/components/TaskAccordion";
-import { tasksTotal, Task } from "@/lib/types";
+import { Button, Card, PageHeader, days } from "@/components/ui";
+import type { Project, Task } from "@/lib/types";
+import { tasksTotal, taskTotal } from "@/lib/types";
 
 function fmt(amount: number) {
   return "CA$" + amount.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-export default function ViewProjectPage() {
-  const params = useParams();
-  const id = Number(params.id);
+export default function ProjectViewPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [proj, setProj] = useState<any>(null);
+  const [project, setProject] = useState<Project | null>(null);
+  const [globalRate, setGlobalRate] = useState(100);
+  const [fxRates, setFxRates] = useState({ USD: 0.74, INR: 61.5 });
   const [error, setError] = useState<string | null>(null);
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [templateName, setTemplateName] = useState("");
-  const [templateBusy, setTemplateBusy] = useState(false);
-  const [globalRate, setGlobalRate] = useState<number>(100);
-  const [fxRates, setFxRates] = useState<{ USD: number; INR: number }>({ USD: 0.74, INR: 61.5 });
 
   useEffect(() => {
-    api
-      .get(`/api/projects/${id}`)
-      .then((p) => { setProj(p); setTemplateName(p.name); })
-      .catch((e) => setError(e.message));
+    api.get(`/api/projects/${id}`).then(setProject).catch((e) => setError(e.message));
     api.get("/api/settings").then((d) => setGlobalRate(Number(d.bill_rate) || 100));
     fetch("https://api.frankfurter.app/latest?base=CAD&symbols=USD,INR")
       .then((r) => r.json())
@@ -36,113 +29,115 @@ export default function ViewProjectPage() {
       .catch(() => {});
   }, [id]);
 
-  async function saveAsTemplate() {
-    if (!templateName.trim() || !proj) return;
-    setTemplateBusy(true);
-    try {
-      await api.post("/api/templates", {
-        name: templateName.trim(),
-        description: "",
-        tasks: proj.tasks,
-      });
-      setShowTemplateModal(false);
-      router.push("/templates");
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setTemplateBusy(false);
-    }
+  async function handleDelete() {
+    if (!confirm(`Delete project "${project?.name}"?`)) return;
+    await api.del(`/api/projects/${id}`);
+    router.push("/projects");
   }
 
-  if (error) return <div className="text-sm text-red-600">Error: {error}</div>;
-  if (!proj) return <div className="text-sm text-gray-400">Loading...</div>;
+  if (error) {
+    return (
+      <Card className="p-4 bg-red-50 border-red-200 text-sm text-red-700">{error}</Card>
+    );
+  }
 
-  const total = tasksTotal(proj.tasks);
-  const effectiveHourlyRate = proj.bill_rate_override != null ? Number(proj.bill_rate_override) : globalRate;
-  const totalCost = total * effectiveHourlyRate * 8;
+  if (!project) {
+    return <Card className="p-8 text-center text-sm text-gray-400">Loading…</Card>;
+  }
+
+  const effectiveRate = project.bill_rate_override ?? globalRate;
+  const total = tasksTotal(project.tasks);
+  const totalCost = total * effectiveRate * 8;
 
   return (
     <div>
-      {showTemplateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Save as Template</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              This will create a new template from <strong>{proj.name}</strong>.
-            </p>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Template name</label>
-            <input
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => e.key === "Enter" && saveAsTemplate()}
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setShowTemplateModal(false)} disabled={templateBusy}>
-                Cancel
-              </Button>
-              <Button onClick={saveAsTemplate} disabled={templateBusy || !templateName.trim()}>
-                {templateBusy ? "Saving..." : "Save Template"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <PageHeader
-        title={proj.name}
-        subtitle={proj.client || ""}
+        title={project.name}
+        subtitle={project.client ? `Client: ${project.client}` : "No client"}
         action={
-          <div className="flex gap-2">
-            <Link href="/projects">
-              <Button variant="secondary">Back</Button>
-            </Link>
-            <Button variant="secondary" onClick={() => setShowTemplateModal(true)}>
-              Save as Template
-            </Button>
+          <div className="flex flex-wrap gap-2">
             <Link href={`/projects/${id}`}>
-              <Button>Edit project</Button>
+              <Button variant="secondary">Edit</Button>
             </Link>
+            <Button variant="danger" onClick={handleDelete}>
+              Delete
+            </Button>
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <Stat label="Tasks" value={proj.tasks.length} />
-        <Stat
-          label="Subtasks"
-          value={proj.tasks.reduce((n: number, t: Task) => n + t.subtasks.length, 0)}
-        />
-        <Stat label="Total estimate" value={days(total)} />
-        <Stat
-          label={`Total cost (${fmt(effectiveHourlyRate)}/hr · ${fmt(effectiveHourlyRate * 8)}/day${proj.bill_rate_override != null ? " – project rate" : " – global rate"})`}
-          value={
-            <div>
-              <div className="text-xl font-semibold text-green-700">{fmt(totalCost)}</div>
-              <div className="flex gap-2 mt-1">
-                <span className="text-xs rounded border border-gray-200 bg-gray-50 px-2 py-0.5 text-gray-500">
-                  US${Math.round(totalCost * fxRates.USD).toLocaleString()}
-                </span>
-                <span className="text-xs rounded border border-gray-200 bg-gray-50 px-2 py-0.5 text-gray-500">
-                  ₹{Math.round(totalCost * fxRates.INR).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          }
-        />
+      {/* Summary stats — 2 cols on mobile, 4 on sm+ */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <Card className="p-3 sm:p-4">
+          <div className="text-xs uppercase tracking-wide text-gray-400">Tasks</div>
+          <div className="mt-1 text-lg sm:text-xl font-semibold text-gray-900">{project.tasks.length}</div>
+        </Card>
+        <Card className="p-3 sm:p-4">
+          <div className="text-xs uppercase tracking-wide text-gray-400">Total days</div>
+          <div className="mt-1 text-lg sm:text-xl font-semibold text-gray-900">{days(total)}</div>
+        </Card>
+        <Card className="p-3 sm:p-4">
+          <div className="text-xs uppercase tracking-wide text-gray-400">Total weeks</div>
+          <div className="mt-1 text-lg sm:text-xl font-semibold text-gray-900">{(total / 5).toFixed(1)}</div>
+        </Card>
+        <Card className="p-3 sm:p-4">
+          <div className="text-xs uppercase tracking-wide text-gray-400">Total cost</div>
+          <div className="mt-1 text-lg sm:text-xl font-semibold text-green-700">{fmt(totalCost)}</div>
+        </Card>
       </div>
 
-      <TaskAccordion tasks={proj.tasks} />
-    </div>
-  );
-}
+      {/* Cost breakdown card */}
+      <Card className="p-4 sm:p-5 mb-6">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Cost breakdown</h3>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <span className="rounded bg-brand-50 border border-brand-200 px-3 py-1.5 text-brand-700">
+            {fmt(totalCost)} CAD
+          </span>
+          <span className="rounded bg-gray-50 border border-gray-200 px-3 py-1.5 text-gray-700">
+            US${Math.round(totalCost * fxRates.USD).toLocaleString()}
+          </span>
+          <span className="rounded bg-gray-50 border border-gray-200 px-3 py-1.5 text-gray-700">
+            ₹{Math.round(totalCost * fxRates.INR).toLocaleString()}
+          </span>
+          <span className="rounded bg-gray-50 border border-gray-200 px-3 py-1.5 text-gray-500 text-xs self-center">
+            {fmt(effectiveRate)}/hr · {fmt(effectiveRate * 8)}/day
+            {project.bill_rate_override ? " (project rate)" : " (global rate)"}
+          </span>
+        </div>
+      </Card>
 
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <Card className="p-4">
-      <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-gray-900">{value}</div>
-    </Card>
+      {/* Tasks */}
+      <div className="space-y-3">
+        {project.tasks.length === 0 && (
+          <Card className="p-8 text-center text-sm text-gray-400">No tasks.</Card>
+        )}
+        {project.tasks.map((task: Task, i: number) => {
+          const taskDays = taskTotal(task);
+          return (
+            <Card key={i} className="overflow-hidden">
+              <div className="flex items-center justify-between px-4 sm:px-5 py-3 bg-gray-50 border-b border-gray-100">
+                <h3 className="font-semibold text-gray-800 text-sm">{task.name}</h3>
+                <div className="text-right shrink-0 ml-3">
+                  <span className="font-semibold text-gray-900 text-sm">{days(taskDays)}</span>
+                  <span className="text-xs text-gray-400 ml-1">({fmt(taskDays * effectiveRate * 8)})</span>
+                </div>
+              </div>
+              {task.subtasks?.length > 0 && (
+                <div className="divide-y divide-gray-50">
+                  {task.subtasks.map((st, j) => (
+                    <div key={j} className="flex items-center justify-between px-4 sm:px-5 py-2 text-sm">
+                      <span className="text-gray-600">{st.name}</span>
+                      <span className="font-medium text-gray-900 shrink-0 ml-3">
+                        {days(Number(st.estimate_days))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }

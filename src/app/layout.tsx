@@ -15,10 +15,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-gray-900">
-        <div className="flex min-h-screen">
+        <div className="flex min-h-screen flex-col md:flex-row">
           <Nav />
-          <main className="flex-1 px-8 py-8 max-w-6xl mx-auto w-full">
-            {children}
+          <main className="flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8 w-full min-w-0">
+            <div className="max-w-6xl mx-auto">
+              {children}
+            </div>
           </main>
         </div>
       </body>

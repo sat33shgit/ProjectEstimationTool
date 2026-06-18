@@ -11,7 +11,6 @@ export default function TaskEditor({
   tasks: Task[];
   onChange: (tasks: Task[]) => void;
 }) {
-  // Collapsed by default. Keyed by task index.
   const [open, setOpen] = useState<Record<number, boolean>>({});
 
   function toggleOpen(i: number) {
@@ -25,7 +24,6 @@ export default function TaskEditor({
   function addTask() {
     const newIndex = tasks.length;
     update([...tasks, { name: "New task", subtasks: [] }]);
-    // expand the newly added task so the user can edit it
     setOpen((o) => ({ ...o, [newIndex]: true }));
   }
 
@@ -71,8 +69,9 @@ export default function TaskEditor({
         const isOpen = !!open[ti];
         return (
           <div key={ti} className="rounded-xl border border-gray-200 bg-white">
+            {/* Task header row */}
             <div
-              className={`flex flex-wrap items-center gap-3 p-4 ${
+              className={`flex flex-wrap items-center gap-2 p-3 sm:p-4 ${
                 isOpen ? "border-b border-gray-100" : ""
               }`}
             >
@@ -91,34 +90,36 @@ export default function TaskEditor({
               <Input
                 value={task.name}
                 onChange={(e) => setTask(ti, { name: e.target.value })}
-                className="flex-1 min-w-[180px] font-medium"
+                className="flex-1 min-w-[140px] font-medium"
                 placeholder="Task name"
               />
-              <span className="text-xs text-gray-400 whitespace-nowrap">
-                {task.subtasks.length} sub
-              </span>
-              <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                {days(taskTotal(task))}
-              </span>
-              <Button variant="danger" onClick={() => removeTask(ti)}>
-                Remove
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-gray-400 hidden sm:inline">
+                  {task.subtasks.length} sub
+                </span>
+                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  {days(taskTotal(task))}
+                </span>
+                <Button variant="danger" onClick={() => removeTask(ti)}>
+                  Remove
+                </Button>
+              </div>
             </div>
 
             {isOpen && (
-              <div className="p-4 space-y-2">
+              <div className="p-3 sm:p-4 space-y-2">
                 {task.subtasks.map((s, si) => (
-                  <div key={si} className="flex items-center gap-3">
-                    <span className="text-gray-300 text-xs w-4">&#8627;</span>
+                  <div key={si} className="flex flex-wrap items-center gap-2">
+                    <span className="text-gray-300 text-xs w-4 shrink-0">&#8627;</span>
                     <Input
                       value={s.name}
                       onChange={(e) =>
                         setSubtask(ti, si, { name: e.target.value })
                       }
-                      className="flex-1"
+                      className="flex-1 min-w-[120px]"
                       placeholder="Subtask name"
                     />
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Input
                         type="number"
                         step="0.25"
@@ -129,14 +130,14 @@ export default function TaskEditor({
                             estimate_days: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="w-24 text-right"
+                        className="w-20 sm:w-24 text-right"
                       />
                       <span className="text-xs text-gray-400">days</span>
                     </div>
                     <Button
                       variant="ghost"
                       onClick={() => removeSubtask(ti, si)}
-                      className="text-red-400"
+                      className="text-red-400 shrink-0"
                     >
                       &#10005;
                     </Button>

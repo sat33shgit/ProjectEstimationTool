@@ -78,14 +78,14 @@ export default function TemplatesPage() {
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex flex-col gap-3">
               <div className="text-sm text-gray-500">
                 {t.task_count} tasks &middot;{" "}
                 <span className="font-semibold text-gray-900">
                   {days(t.total_days)}
                 </span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Link href={`/templates/${t.id}/view`}>
                   <Button variant="secondary">View</Button>
                 </Link>

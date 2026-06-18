@@ -6,12 +6,12 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, PageHeader, Button, days } from "@/components/ui";
 import TaskAccordion from "@/components/TaskAccordion";
-import { tasksTotal, Task } from "@/lib/types";
+import { tasksTotal, Task, Template } from "@/lib/types";
 
 export default function ViewTemplatePage() {
   const params = useParams();
   const id = Number(params.id);
-  const [tpl, setTpl] = useState<any>(null);
+  const [tpl, setTpl] = useState<Template | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

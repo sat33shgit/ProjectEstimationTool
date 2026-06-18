@@ -8,7 +8,7 @@ export interface Subtask {
 export interface Task {
   id?: number;
   name: string;
-  category?: string; // kept for backward-compat; mirrors task name on save
+  category?: string;
   sort_order?: number;
   subtasks: Subtask[];
 }
@@ -28,6 +28,7 @@ export interface Project {
   client: string;
   description: string;
   status: string;
+  bill_rate_override?: number | null;
   created_at?: string;
   updated_at?: string;
   tasks: Task[];

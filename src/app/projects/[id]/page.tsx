@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
+import type { Project } from "@/lib/types";
 import ProjectForm from "@/components/ProjectForm";
 
 export default function EditProjectPage() {
   const params = useParams();
   const id = Number(params.id);
-  const [initial, setInitial] = useState<any>(null);
+  const [initial, setInitial] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
