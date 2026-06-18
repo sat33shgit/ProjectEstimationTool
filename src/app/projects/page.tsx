@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Card, PageHeader, Button, Badge, days } from "@/components/ui";
+import { Card, PageHeader, Button, days } from "@/components/ui";
 
 export default function ProjectsPage() {
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState<{ id: number; name: string } | null>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [templateBusy, setTemplateBusy] = useState(false);
   const router = useRouter();
 
   async function load() {
@@ -40,6 +43,30 @@ export default function ProjectsPage() {
     }
   }
 
+  function openSaveAsTemplate(p: { id: number; name: string }) {
+    setTemplateName(p.name);
+    setSavingTemplate(p);
+  }
+
+  async function confirmSaveAsTemplate() {
+    if (!savingTemplate || !templateName.trim()) return;
+    setTemplateBusy(true);
+    try {
+      const proj = await api.get(`/api/projects/${savingTemplate.id}`);
+      await api.post("/api/templates", {
+        name: templateName.trim(),
+        description: "",
+        tasks: proj.tasks,
+      });
+      setSavingTemplate(null);
+      router.push("/templates");
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setTemplateBusy(false);
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -58,6 +85,33 @@ export default function ProjectsPage() {
         </Card>
       )}
 
+      {savingTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">Save as Template</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              This will create a new template from <strong>{savingTemplate.name}</strong>.
+            </p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Template name</label>
+            <input
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && confirmSaveAsTemplate()}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setSavingTemplate(null)} disabled={templateBusy}>
+                Cancel
+              </Button>
+              <Button onClick={confirmSaveAsTemplate} disabled={templateBusy || !templateName.trim()}>
+                {templateBusy ? "Saving..." : "Save Template"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -65,7 +119,6 @@ export default function ProjectsPage() {
               <tr className="border-b border-gray-100 text-left text-gray-500">
                 <th className="px-5 py-3 font-medium">Project</th>
                 <th className="px-5 py-3 font-medium">Client</th>
-                <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium text-right">Tasks</th>
                 <th className="px-5 py-3 font-medium text-right">Total days</th>
                 <th className="px-5 py-3"></th>
@@ -90,9 +143,6 @@ export default function ProjectsPage() {
                     </Link>
                   </td>
                   <td className="px-5 py-3 text-gray-500">{p.client || "—"}</td>
-                  <td className="px-5 py-3">
-                    <Badge>{p.status}</Badge>
-                  </td>
                   <td className="px-5 py-3 text-right text-gray-600">
                     {p.task_count}
                   </td>
@@ -113,6 +163,12 @@ export default function ProjectsPage() {
                         disabled={busyId === p.id}
                       >
                         {busyId === p.id ? "Copying..." : "Duplicate"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => openSaveAsTemplate(p)}
+                      >
+                        Save as Template
                       </Button>
                       <Button variant="danger" onClick={() => remove(p.id)}>
                         Delete

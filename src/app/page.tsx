@@ -13,6 +13,7 @@ import {
   Pie,
   Cell,
   Legend,
+  LabelList,
 } from "recharts";
 import { api } from "@/lib/api";
 import { Card, PageHeader, Button, Badge, days } from "@/components/ui";
@@ -153,6 +154,17 @@ export default function DashboardPage() {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip cursor={{ fill: "rgba(37,99,235,0.06)" }} />
+                    <Legend
+                      wrapperStyle={{ fontSize: 11 }}
+                      payload={barData.map((b, i) => ({
+                        value: b.name,
+                        type: "square" as const,
+                        color:
+                          selectedProjectId == null || selectedProjectId === b.id
+                            ? COLORS[i % COLORS.length]
+                            : "#cbd5e1",
+                      }))}
+                    />
                     <Bar
                       dataKey="days"
                       radius={[4, 4, 0, 0]}
@@ -202,13 +214,14 @@ export default function DashboardPage() {
                       cx="50%"
                       cy="50%"
                       outerRadius={90}
-                      label={(e: any) => `${e.name}`}
+                      label={(e: any) => `${e.name} (${(e.value * 8).toFixed(0)}h)`}
+                      labelLine={true}
                     >
                       {pieData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: any) => `${v} days`} />
+                    <Tooltip formatter={(v: any) => [`${v} days (${(Number(v) * 8).toFixed(0)}h)`, "Effort"]} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>

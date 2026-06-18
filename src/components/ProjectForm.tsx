@@ -3,12 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Button, Card, Input, Textarea, PageHeader, days } from "./ui";
+import { Button, Card, Input, PageHeader, days } from "./ui";
 import TaskEditor from "./TaskEditor";
 import ImportFromTemplate from "./ImportFromTemplate";
 import { Task, tasksTotal, taskTotal } from "@/lib/types";
-
-const STATUSES = ["Draft", "Estimating", "Sent", "Approved", "Archived"];
 
 export default function ProjectForm({
   id,
@@ -18,16 +16,12 @@ export default function ProjectForm({
   initial?: {
     name: string;
     client: string;
-    description: string;
-    status: string;
     tasks: Task[];
   };
 }) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
   const [client, setClient] = useState(initial?.client ?? "");
-  const [description, setDescription] = useState(initial?.description ?? "");
-  const [status, setStatus] = useState(initial?.status ?? "Draft");
   const [tasks, setTasks] = useState<Task[]>(initial?.tasks ?? []);
   const [showImport, setShowImport] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,7 +40,7 @@ export default function ProjectForm({
     setSaving(true);
     setError(null);
     try {
-      const payload = { name, client, description, status, tasks };
+      const payload = { name, client, tasks };
       if (id) await api.put(`/api/projects/${id}`, payload);
       else await api.post("/api/projects", payload);
       router.push("/projects");
@@ -103,30 +97,6 @@ export default function ProjectForm({
               value={client}
               onChange={(e) => setClient(e.target.value)}
               placeholder="Client name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              {STATUSES.map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={1}
             />
           </div>
         </div>
