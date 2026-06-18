@@ -1,36 +1,62 @@
 # Project Estimation Tool
 
-A simple web app to estimate projects (especially websites) using reusable
-**templates** of tasks and subtasks, then build a per-project estimate by
-importing tasks (whole template or task-by-task), adding subtasks, and getting a
-consolidated effort total in **days**.
+A web app to estimate projects using reusable **templates** of tasks and subtasks,
+then build per-project estimates with live **cost calculations** in CAD, USD, and INR.
 
-Built with **Next.js (React + API routes)** and **PostgreSQL**. Deploys cleanly
-to **Vercel** with **Vercel Postgres**.
-
-## Features
-
-- **Templates** — create reusable templates with many tasks, each task with one
-  or more subtasks. Each subtask has a day estimate; the task total is the sum of
-  its subtasks.
-- **Projects** — create a project and import the **entire template** or pick
-  **tasks one by one**. Customize freely: add/remove tasks, add subtasks, change
-  estimates.
-- **Live estimation** — a summary panel shows total days, weeks, and a breakdown
-  by category as you edit.
-- **Dashboard** — project count, template count, total & average estimated days,
-  a bar chart of effort per project, a pie chart of effort by category, and a
-  table of all projects.
-
-Estimation logic: **task total = sum of its subtasks; project total = sum of all
-tasks.** (As chosen during setup.)
+---
 
 ## Tech stack
 
-- Next.js 14 (App Router) — React UI + API routes in one app
-- PostgreSQL via `pg`
-- Tailwind CSS (clean white UI)
-- Recharts for the dashboard charts
+### Frontend
+| Technology | Version | Purpose |
+|---|---|---|
+| **Next.js** | 14.2.5 | App Router, server & client components, API routes |
+| **React** | 18.3 | UI component model, hooks (`useState`, `useEffect`, `useMemo`) |
+| **TypeScript** | 5.5 | Static typing across all source files (`strict` mode) |
+| **Tailwind CSS** | 3.4 | Utility-first styling with a custom `brand` colour palette |
+| **Recharts** | 2.12 | Bar chart (effort by project) and pie chart (effort by task) on dashboard |
+
+### Backend / API
+| Technology | Version | Purpose |
+|---|---|---|
+| **Next.js API Routes** | 14.2.5 | REST endpoints under `src/app/api/` (App Router route handlers) |
+| **node-postgres (`pg`)** | 8.12 | PostgreSQL client; connection pooling via `pg.Pool` |
+| **PostgreSQL** | any 14+ | Primary data store (Neon hosted in production) |
+
+### Data layer
+- **`src/lib/db.ts`** — pool setup, SSL auto-detection, `query()` / `queryOne()` / `withTransaction()` helpers
+- **`src/lib/repo.ts`** — all SQL queries for projects, templates, settings, and dashboard aggregation
+- **`src/lib/schema.sql`** — fully idempotent schema (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`); applied via the "Initialize database" button or `npm run db:init`
+
+### External services
+| Service | Purpose |
+|---|---|
+| **[Neon](https://neon.tech)** | Serverless PostgreSQL hosting (used via Vercel Postgres integration) |
+| **[frankfurter.app](https://api.frankfurter.app)** | Live CAD → USD / INR exchange rates; hardcoded fallback (`USD 0.74`, `INR 61.5`) used if fetch fails |
+
+### Toolchain
+| Tool | Version | Purpose |
+|---|---|---|
+| **TypeScript compiler** | 5.5 | `tsc --noEmit` for static analysis; target ES2020 |
+| **PostCSS** | 8.4 | Required by Tailwind |
+| **Autoprefixer** | 10.4 | CSS vendor prefixes via PostCSS |
+| **ESLint** | via Next.js | `npm run lint` |
+| **Node.js** | 18+ | Runtime (local dev and Vercel serverless functions) |
+
+### Deployment
+- **Vercel** — zero-config Next.js deployment; serverless functions for all API routes
+- **Vercel Postgres (Neon)** — managed PostgreSQL; `POSTGRES_URL` injected automatically
+
+---
+
+## Features
+
+- **Templates** — reusable sets of tasks and subtasks with day estimates
+- **Projects** — import a full template or individual tasks, then customize freely; estimates update live
+- **Bill rate & cost** — global default rate (CA$/hr) set in Settings, overridable per project; total cost shown in CA$, US$, and ₹ using live FX rates
+- **Save as Template** — convert any project into a reusable template from the list or view page
+- **Dashboard** — project/template counts, total & average days, bar chart (click to filter pie), pie chart with hours in labels
+- **Settings** — CA$/hr input with read-only CA$/day equivalent and a live CAD/USD/INR rates table
 
 ---
 
@@ -44,49 +70,35 @@ tasks.** (As chosen during setup.)
 
 2. **Start Postgres** and create a database, e.g. `estimation`.
 
-3. **Configure the connection.** Copy `.env.example` to `.env` and set:
+3. **Configure the connection** — copy `.env.example` to `.env.local` and set:
 
    ```
    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/estimation
    ```
 
-4. **Create tables + seed a sample template**
+4. **Apply schema**
 
    ```bash
    npm run db:init
    ```
 
-5. **Run the dev server**
+5. **Start dev server**
 
    ```bash
    npm run dev
    ```
 
-   Open http://localhost:3000
+   Open http://localhost:3000. If tables are missing, click **"Initialize database"** on the Dashboard.
 
 ---
 
-## Deploy to Vercel (with Vercel Postgres)
+## Deploy to Vercel
 
-1. Push this folder to a Git repo (GitHub/GitLab/Bitbucket).
-2. In Vercel, **New Project** → import the repo. Framework auto-detects as
-   Next.js. Deploy.
-3. In the project, go to **Storage → Create Database → Postgres** (Neon-backed).
-   Vercel automatically adds env vars including **`POSTGRES_URL`** to the project.
-   The app reads `POSTGRES_URL` first, then `DATABASE_URL`.
-4. **Redeploy** so the function picks up the new env vars.
-5. **Create the tables.** Two options:
-   - Open the deployed app — the Dashboard shows an **"Initialize database"**
-     button when tables are missing. Click it. *(This creates tables but does not
-     seed the sample template.)*
-   - Or seed locally against the cloud DB: copy the `POSTGRES_URL` value from
-     Vercel into a local `.env` as `DATABASE_URL`, then run `npm run db:init`
-     (this also adds the sample "Standard Website Build" template).
-
-That's it — you'll have a live URL.
-
-> Note: with serverless Postgres, consider Vercel's connection pooling
-> (`POSTGRES_URL` from Vercel already points to the pooled endpoint).
+1. Push to a Git repo (GitHub / GitLab / Bitbucket).
+2. **New Project** in Vercel → import the repo. Framework detected as Next.js automatically.
+3. Go to **Storage → Create Database → Postgres** (Neon). Vercel injects `POSTGRES_URL` and related vars.
+4. **Redeploy** so functions pick up the new env vars.
+5. Open the app → Dashboard → **"Initialize database"** to create tables and seed the default bill rate.
 
 ---
 
@@ -95,31 +107,41 @@ That's it — you'll have a live URL.
 ```
 src/
   app/
-    page.tsx                 Dashboard (charts + totals + table)
-    templates/               Template list / new / edit
-    projects/                Project list / new / edit (estimation editor)
-    api/                     REST API routes
-      templates/ ...         CRUD for templates
-      projects/  ...         CRUD for projects
-      dashboard/             Aggregated dashboard data
-      init-db/               POST to create tables (for Vercel)
-  components/                Nav, UI primitives, TaskEditor, forms, import modal
+    page.tsx                  Dashboard
+    projects/                 List / new / edit / view
+    templates/                List / new / edit / view
+    settings/                 Global bill rate + FX table
+    api/
+      projects/               CRUD + duplicate
+      templates/              CRUD + duplicate
+      settings/               GET + PUT bill rate
+      dashboard/              Aggregated stats query
+      init-db/                POST — applies schema.sql
+  components/
+    Nav.tsx                   Sidebar navigation
+    ProjectForm.tsx           Create/edit project with live cost summary
+    TemplateForm.tsx          Create/edit template
+    TaskEditor.tsx            Task + subtask editor (add/remove/reorder)
+    TaskAccordion.tsx         Read-only task/subtask accordion
+    ImportFromTemplate.tsx    Modal — import tasks from a template
+    ui.tsx                    Button, Card, Input, Badge, PageHeader, days()
   lib/
-    db.ts                    pg pool + query helpers
-    repo.ts                  Data access (templates, projects, dashboard)
-    schema.sql               Database schema
-    types.ts                 Shared types + estimation math
+    db.ts                     pg Pool + query/queryOne/withTransaction
+    repo.ts                   All data access functions
+    schema.sql                Idempotent DDL
+    types.ts                  TypeScript interfaces + taskTotal/tasksTotal
+    api.ts                    Client-side get/post/put/del helpers
 scripts/
-  db-init.mjs                Applies schema + seeds sample template
+  db-init.mjs                 Local schema apply script
 ```
 
-## How the estimation flows
+## Estimation & cost logic
 
-1. Create a **template** (e.g. "Standard Website Build") with tasks like
-   Research, UI/UX Design, Frontend, Backend, QA, Deployment — each broken into
-   subtasks with day estimates.
-2. Create a **project**, click **Import from template**, and either import the
-   whole template or check specific tasks to bring in.
-3. Adjust estimates, add subtasks, add more tasks. The **Estimation summary**
-   panel updates live with the total in days/weeks and a per-category breakdown.
-4. Save. The **Dashboard** aggregates all projects with charts and a table.
+```
+task_total    = sum(subtask.estimate_days)
+project_total = sum(task_total)
+total_cost    = project_total × effective_hourly_rate × 8
+effective_rate = project.bill_rate_override ?? settings.bill_rate
+```
+
+All rates are stored and calculated in **CAD per hour**. The ×8 converts days to hours.
