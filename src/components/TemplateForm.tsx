@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Button, Card, Input, Textarea, PageHeader, days } from "./ui";
+import { Button, Card, Input, Textarea, PageHeader, hoursAndDays } from "./ui";
 import TaskEditor from "./TaskEditor";
 import { Task, tasksTotal } from "@/lib/types";
 
@@ -45,7 +45,7 @@ export default function TemplateForm({
     <div>
       <PageHeader
         title={id ? "Edit template" : "New template"}
-        subtitle="Define tasks and subtasks with default day estimates."
+        subtitle="Define tasks and subtasks with default hour estimates."
         action={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => router.back()}>
@@ -90,7 +90,7 @@ export default function TemplateForm({
         <div className="text-sm text-gray-500">
           Total:{" "}
           <span className="font-semibold text-gray-900">
-            {days(tasksTotal(tasks))}
+            {hoursAndDays(tasksTotal(tasks))}
           </span>
         </div>
       </div>

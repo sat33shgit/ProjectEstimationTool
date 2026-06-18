@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Card, PageHeader, Button, days } from "@/components/ui";
+import { Card, PageHeader, Button, hoursAndDays } from "@/components/ui";
 
 export default function TemplatesPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -82,7 +82,7 @@ export default function TemplatesPage() {
               <div className="text-sm text-gray-500">
                 {t.task_count} tasks &middot;{" "}
                 <span className="font-semibold text-gray-900">
-                  {days(t.total_days)}
+                    {hoursAndDays(t.total_days)}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { Card, PageHeader, Button, days } from "@/components/ui";
+import { Card, PageHeader, Button, hoursAndDays } from "@/components/ui";
 import TaskAccordion from "@/components/TaskAccordion";
 import { tasksTotal, Task, Template } from "@/lib/types";
 
@@ -52,7 +52,10 @@ export default function ViewTemplatePage() {
             0
           )}
         />
-        <Stat label="Total estimate" value={days(total)} />
+        <Stat
+          label="Total estimate"
+          value={hoursAndDays(total)}
+        />
       </div>
 
       <TaskAccordion tasks={tpl.tasks} />

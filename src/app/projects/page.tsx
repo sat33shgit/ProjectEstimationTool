@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { Button, Card, PageHeader, days } from "@/components/ui";
+import { Button, Card, PageHeader, hours } from "@/components/ui";
 
 type Project = {
   id: number;
@@ -88,7 +88,8 @@ export default function ProjectsPage() {
                 )}
                 <div className="mt-2 text-sm text-gray-500">
                   {p.task_count} tasks &middot;{" "}
-                  <span className="font-semibold text-gray-900">{days(p.total_days)}</span>
+                  <span className="font-semibold text-gray-900">{hours(p.total_days)}</span>
+                  <span className="text-gray-400 text-xs ml-1">({(() => { const d = p.total_days / 8; return `${d % 1 === 0 ? d : d.toFixed(2)}d`; })()})</span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Link href={`/projects/${p.id}/view`}>
@@ -117,7 +118,7 @@ export default function ProjectsPage() {
                     <th className="px-5 py-3 font-medium">Project</th>
                     <th className="px-5 py-3 font-medium">Client</th>
                     <th className="px-5 py-3 font-medium text-right">Tasks</th>
-                    <th className="px-5 py-3 font-medium text-right">Total days</th>
+                    <th className="px-5 py-3 font-medium text-right">Total hours</th>
                     <th className="px-5 py-3 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
@@ -135,7 +136,8 @@ export default function ProjectsPage() {
                       <td className="px-5 py-3 text-gray-500">{p.client || "—"}</td>
                       <td className="px-5 py-3 text-right text-gray-600">{p.task_count}</td>
                       <td className="px-5 py-3 text-right font-semibold text-gray-900">
-                        {days(p.total_days)}
+                        {hours(p.total_days)}
+                        <span className="text-gray-400 font-normal ml-1 text-xs">({(() => { const d = p.total_days / 8; return `${d % 1 === 0 ? d : d.toFixed(2)}d`; })()})</span>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1.5">

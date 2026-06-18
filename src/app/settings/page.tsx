@@ -39,11 +39,8 @@ export default function SettingsPage() {
   const hr = Number(hourlyRate);
   const valid = hourlyRate !== "" && !isNaN(hr) && hr >= 0;
 
-  const perDayCAD = valid ? hr * 8 : null;
   const perHrUSD  = valid ? hr * rates.USD : null;
-  const perDayUSD = valid ? hr * 8 * rates.USD : null;
   const perHrINR  = valid ? hr * rates.INR : null;
-  const perDayINR = valid ? hr * 8 * rates.INR : null;
 
   async function save() {
     if (!valid) { setError("Enter a valid bill rate (≥ 0)."); return; }
@@ -110,7 +107,6 @@ export default function SettingsPage() {
                 <tr className="border-b border-gray-100 text-gray-500 text-xs">
                   <th className="px-4 py-2 text-left font-medium">Currency</th>
                   <th className="px-4 py-2 text-right font-medium">Per hour</th>
-                  <th className="px-4 py-2 text-right font-medium">Per day (8 hrs)</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,26 +115,17 @@ export default function SettingsPage() {
                   <td className="px-4 py-2 text-right font-semibold text-brand-700">
                     {valid ? fmtCurrency(hr, "CA$") : "—"}
                   </td>
-                  <td className="px-4 py-2 text-right font-semibold text-brand-700">
-                    {perDayCAD != null ? fmtCurrency(perDayCAD, "CA$") : "—"}
-                  </td>
                 </tr>
                 <tr className="border-b border-gray-50">
                   <td className="px-4 py-2 font-medium text-gray-700">🇺🇸 USD</td>
                   <td className="px-4 py-2 text-right text-gray-600">
                     {perHrUSD != null ? fmtCurrency(perHrUSD, "US$") : "—"}
                   </td>
-                  <td className="px-4 py-2 text-right text-gray-600">
-                    {perDayUSD != null ? fmtCurrency(perDayUSD, "US$") : "—"}
-                  </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2 font-medium text-gray-700">🇮🇳 INR</td>
                   <td className="px-4 py-2 text-right text-gray-600">
                     {perHrINR != null ? fmtCurrency(perHrINR, "₹") : "—"}
-                  </td>
-                  <td className="px-4 py-2 text-right text-gray-600">
-                    {perDayINR != null ? fmtCurrency(perDayINR, "₹") : "—"}
                   </td>
                 </tr>
               </tbody>

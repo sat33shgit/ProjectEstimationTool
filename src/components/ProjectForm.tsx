@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Button, Card, Input, PageHeader, days } from "./ui";
+import { Button, Card, Input, PageHeader, daysFromHours, hours } from "./ui";
 import TaskEditor from "./TaskEditor";
 import ImportFromTemplate from "./ImportFromTemplate";
 import { Task, tasksTotal, taskTotal } from "@/lib/types";
@@ -47,7 +47,7 @@ export default function ProjectForm({
       .catch(() => {});
   }, []);
 
-  // rates are stored per-hour; 1 day = 8 hours
+  // rates are stored per-hour; estimates are in hours
   const effectiveHourlyRate =
     overrideRaw.trim() !== "" && !isNaN(Number(overrideRaw))
       ? Number(overrideRaw)
@@ -83,7 +83,7 @@ export default function ProjectForm({
   }
 
   const total = tasksTotal(tasks);
-  const totalCost = total * effectiveHourlyRate * 8;
+  const totalCost = total * effectiveHourlyRate;
 
   return (
     <div>
@@ -174,10 +174,10 @@ export default function ProjectForm({
                 Total effort
               </div>
               <div className="mt-1 text-3xl font-bold text-brand-700">
-                {days(total)}
+                {hours(total)}
               </div>
               <div className="mt-1 text-xs text-gray-500">
-                {(total / 5).toFixed(1)} weeks &middot; {tasks.length} tasks
+                {daysFromHours(total)} &middot; {(total / 40).toFixed(1)} weeks &middot; {tasks.length} tasks
               </div>
             </div>
 
@@ -197,7 +197,7 @@ export default function ProjectForm({
                 </span>
               </div>
               <div className="mt-1 text-xs text-gray-500">
-                {fmt(effectiveHourlyRate)}/hr · {fmt(effectiveHourlyRate * 8)}/day
+                {fmt(effectiveHourlyRate)}/hr
                 {overrideRaw.trim() !== "" ? " (project rate)" : " (global rate)"}
               </div>
             </div>
@@ -208,20 +208,23 @@ export default function ProjectForm({
                   Add tasks to see the breakdown.
                 </div>
               )}
-              {tasks.map((t, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-gray-600 truncate pr-2">{t.name}</span>
-                  <span className="font-medium text-gray-900">
-                    {days(taskTotal(t))}
-                    <span className="text-gray-400 font-normal ml-1">
-                      ({fmt(taskTotal(t) * effectiveHourlyRate * 8)})
+              {tasks.map((t, i) => {
+                const estimate = taskTotal(t);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span className="text-gray-600 truncate pr-2">{t.name}</span>
+                    <span className="font-medium text-gray-900">
+                      {hours(estimate)}
+                      <span className="text-gray-400 font-normal ml-1">
+                        ({fmt(estimate * effectiveHourlyRate)})
+                      </span>
                     </span>
-                  </span>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </Card>
         </div>

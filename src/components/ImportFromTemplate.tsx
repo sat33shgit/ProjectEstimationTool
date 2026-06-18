@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Button, days } from "./ui";
+import { Button, hours } from "./ui";
 import { Task, taskTotal } from "@/lib/types";
 
 export default function ImportFromTemplate({
@@ -123,7 +123,7 @@ export default function ImportFromTemplate({
               >
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} ({days(t.total_days)})
+                    {t.name} ({hours(t.total_days)})
                   </option>
                 ))}
               </select>
@@ -168,7 +168,7 @@ export default function ImportFromTemplate({
                           </div>
                         </div>
                         <span className="text-sm font-semibold text-gray-700">
-                          {days(taskTotal(t))}
+                          {hours(taskTotal(t))}
                         </span>
                       </label>
                     ))}

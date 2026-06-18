@@ -15,7 +15,7 @@ import {
   Legend,
 } from "recharts";
 import { api } from "@/lib/api";
-import { Card, PageHeader, Button, days } from "@/components/ui";
+import { Card, PageHeader, Button, daysFromHours, hours, hoursAndDays } from "@/components/ui";
 import type { DashboardData } from "@/lib/types";
 
 const COLORS = [
@@ -83,7 +83,7 @@ export default function DashboardPage() {
       (data?.projects ?? []).map((p) => ({
         id: p.id,
         name: p.name.length > 14 ? p.name.slice(0, 14) + "..." : p.name,
-        days: Number(p.total_days) || 0,
+        hours: Number(p.total_days) || 0,
       })),
     [data]
   );
@@ -120,8 +120,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Stat label="Projects" value={data.project_count} />
             <Stat label="Templates" value={data.template_count} />
-            <Stat label="Total estimated" value={days(data.total_days)} />
-            <Stat label="Avg / project" value={days(data.avg_days)} />
+            <Stat label="Total estimated" value={hoursAndDays(data.total_days)} />
+            <Stat label="Avg / project" value={hours(data.avg_days)} />
           </div>
 
           {/* Charts — stack on mobile, side-by-side on lg */}
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             <Card className="p-4 sm:p-5">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-semibold text-gray-700">
-                  Effort by project (days)
+                  Effort by project (hours)
                 </h3>
                 {selectedProjectId != null && (
                   <button
@@ -149,7 +149,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={barData}>
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} width={28} />
+                    <YAxis tick={{ fontSize: 10 }} width={40} label={{ value: "Hours", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 10, fill: "#9ca3af" } }} />
                     <Tooltip cursor={{ fill: "rgba(37,99,235,0.06)" }} />
                     <Legend
                       wrapperStyle={{ fontSize: 10 }}
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                       }))}
                     />
                     <Bar
-                      dataKey="days"
+                      dataKey="hours"
                       radius={[4, 4, 0, 0]}
                       cursor="pointer"
                       onClick={(d: any) => {
@@ -191,7 +191,7 @@ export default function DashboardPage() {
 
             <Card className="p-4 sm:p-5">
               <h3 className="text-sm font-semibold text-gray-700 mb-1">
-                Effort by task (days)
+                Effort by task (hours)
               </h3>
               <p className="text-xs text-gray-400 mb-3">
                 {selectedProject
@@ -210,14 +210,14 @@ export default function DashboardPage() {
                       cx="50%"
                       cy="45%"
                       outerRadius={75}
-                      label={(e: any) => `${e.name} (${(e.value * 8).toFixed(0)}h)`}
+                      label={(e: any) => `${e.name} (${e.value}h)`}
                       labelLine={true}
                     >
                       {pieData.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: any) => [`${v} days (${(Number(v) * 8).toFixed(0)}h)`, "Effort"]} />
+                    <Tooltip formatter={(v: any) => [`${v}h`, "Effort"]} />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
                     <th className="px-4 sm:px-5 py-2 font-medium">Project</th>
                     <th className="px-4 sm:px-5 py-2 font-medium">Client</th>
                     <th className="px-4 sm:px-5 py-2 font-medium text-right">Tasks</th>
-                    <th className="px-4 sm:px-5 py-2 font-medium text-right">Total days</th>
+                    <th className="px-4 sm:px-5 py-2 font-medium text-right">Total hours / days</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -278,7 +278,10 @@ export default function DashboardPage() {
                       <td className="px-4 sm:px-5 py-3 text-gray-500">{p.client || "—"}</td>
                       <td className="px-4 sm:px-5 py-3 text-right text-gray-600">{p.task_count}</td>
                       <td className="px-4 sm:px-5 py-3 text-right font-semibold text-gray-900">
-                        {days(p.total_days)}
+                        {hours(p.total_days)}
+                        <span className="text-gray-400 font-normal ml-1 text-xs">
+                          ({daysFromHours(p.total_days)})
+                        </span>
                       </td>
                     </tr>
                   ))}

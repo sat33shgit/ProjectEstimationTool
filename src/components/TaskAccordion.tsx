@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, days } from "./ui";
+import { Card, daysFromHours, hours } from "./ui";
 import { Task, taskTotal } from "@/lib/types";
 
 export default function TaskAccordion({ tasks }: { tasks: Task[] }) {
@@ -23,6 +23,7 @@ export default function TaskAccordion({ tasks }: { tasks: Task[] }) {
       {tasks.map((task, ti) => {
         const hasSubs = task.subtasks.length > 0;
         const isOpen = !!open[ti];
+        const total = taskTotal(task);
         return (
           <Card key={ti}>
             <button
@@ -55,7 +56,8 @@ export default function TaskAccordion({ tasks }: { tasks: Task[] }) {
                 )}
               </span>
               <span className="text-sm font-semibold text-gray-900">
-                {days(taskTotal(task))}
+                {hours(total)}
+                <span className="text-xs text-gray-400 font-normal ml-1">({daysFromHours(total)})</span>
               </span>
             </button>
 
@@ -71,7 +73,8 @@ export default function TaskAccordion({ tasks }: { tasks: Task[] }) {
                       {s.name}
                     </span>
                     <span className="text-gray-700">
-                      {days(s.estimate_days)}
+                      {hours(s.estimate_days)}
+                      <span className="text-xs text-gray-400 ml-1">({daysFromHours(s.estimate_days)})</span>
                     </span>
                   </div>
                 ))}

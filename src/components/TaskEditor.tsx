@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, Input, days } from "./ui";
+import { Button, Input, hours } from "./ui";
 import { Task, taskTotal } from "@/lib/types";
 
 export default function TaskEditor({
@@ -38,7 +38,7 @@ export default function TaskEditor({
   function addSubtask(i: number) {
     const t = tasks[i];
     setTask(i, {
-      subtasks: [...t.subtasks, { name: "New subtask", estimate_days: 1 }],
+      subtasks: [...t.subtasks, { name: "New subtask", estimate_days: 8 }],
     });
     setOpen((o) => ({ ...o, [i]: true }));
   }
@@ -98,7 +98,7 @@ export default function TaskEditor({
                   {task.subtasks.length} sub
                 </span>
                 <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                  {days(taskTotal(task))}
+                  {hours(taskTotal(task))}
                 </span>
                 <Button variant="danger" onClick={() => removeTask(ti)}>
                   Remove
@@ -132,7 +132,7 @@ export default function TaskEditor({
                         }
                         className="w-20 sm:w-24 text-right"
                       />
-                      <span className="text-xs text-gray-400">days</span>
+                      <span className="text-xs text-gray-400">hrs</span>
                     </div>
                     <Button
                       variant="ghost"

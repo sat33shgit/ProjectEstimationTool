@@ -88,8 +88,18 @@ export function PageHeader({
   );
 }
 
+export const HOURS_PER_DAY = 8;
 
-export function days(n: number) {
+export function hours(n: number) {
   const v = Number(n) || 0;
-  return `${v % 1 === 0 ? v : v.toFixed(2)}d`;
+  return `${v % 1 === 0 ? v : v.toFixed(2)}h`;
+}
+
+export function daysFromHours(n: number) {
+  const d = (Number(n) || 0) / HOURS_PER_DAY;
+  return `${d % 1 === 0 ? d : d.toFixed(2)}d`;
+}
+
+export function hoursAndDays(n: number) {
+  return `${hours(n)} · ${daysFromHours(n)}`;
 }
