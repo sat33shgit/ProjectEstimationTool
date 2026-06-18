@@ -27,8 +27,6 @@ export default function EditProjectPage() {
       initial={{
         name: initial.name,
         client: initial.client,
-        description: initial.description,
-        status: initial.status,
         tasks: initial.tasks,
       }}
     />
