@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, PageHeader, Button, days } from "@/components/ui";
 
+function fmt(amount: number) {
+  return "CA$" + amount.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 export default function ProjectsPage() {
   const [items, setItems] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -13,6 +17,7 @@ export default function ProjectsPage() {
   const [savingTemplate, setSavingTemplate] = useState<{ id: number; name: string } | null>(null);
   const [templateName, setTemplateName] = useState("");
   const [templateBusy, setTemplateBusy] = useState(false);
+  const [globalRate, setGlobalRate] = useState<number>(100);
   const router = useRouter();
 
   async function load() {
@@ -24,6 +29,7 @@ export default function ProjectsPage() {
   }
   useEffect(() => {
     load();
+    api.get("/api/settings").then((d) => setGlobalRate(Number(d.bill_rate) || 100));
   }, []);
 
   async function remove(id: number) {
@@ -121,6 +127,7 @@ export default function ProjectsPage() {
                 <th className="px-5 py-3 font-medium">Client</th>
                 <th className="px-5 py-3 font-medium text-right">Tasks</th>
                 <th className="px-5 py-3 font-medium text-right">Total days</th>
+                <th className="px-5 py-3 font-medium text-right">Total cost</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
@@ -148,6 +155,12 @@ export default function ProjectsPage() {
                   </td>
                   <td className="px-5 py-3 text-right font-semibold text-gray-900">
                     {days(p.total_days)}
+                  </td>
+                  <td className="px-5 py-3 text-right font-semibold text-green-700">
+                    {fmt(p.total_days * (p.bill_rate_override != null ? Number(p.bill_rate_override) : globalRate) * 8)}
+                    {p.bill_rate_override != null && (
+                      <span className="text-xs font-normal text-gray-400 ml-1">(custom)</span>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex justify-end gap-2">

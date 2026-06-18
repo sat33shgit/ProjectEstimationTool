@@ -51,6 +51,14 @@ CREATE TABLE IF NOT EXISTS project_subtasks (
   sort_order       INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL DEFAULT ''
+);
+INSERT INTO settings (key, value) VALUES ('bill_rate', '100') ON CONFLICT (key) DO NOTHING;
+
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS bill_rate_override NUMERIC(10,2) DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_template_tasks_template ON template_tasks(template_id);
 CREATE INDEX IF NOT EXISTS idx_template_subtasks_task ON template_subtasks(template_task_id);
 CREATE INDEX IF NOT EXISTS idx_project_tasks_project ON project_tasks(project_id);

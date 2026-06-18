@@ -1,6 +1,23 @@
 import { pool, query, queryOne, withTransaction } from "./db";
 import type { Template, Project, Task, DashboardData } from "./types";
 
+// ---------- Settings ----------
+
+export async function getSetting(key: string): Promise<string | null> {
+  const row = await queryOne<{ value: string }>(
+    "SELECT value FROM settings WHERE key=$1",
+    [key]
+  );
+  return row?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await query(
+    "INSERT INTO settings (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2",
+    [key, value]
+  );
+}
+
 // ---------- Templates ----------
 
 export async function listTemplates() {
@@ -116,6 +133,7 @@ export async function duplicateTemplate(id: number): Promise<number> {
 export async function listProjects() {
   return query(
     `SELECT p.id, p.name, p.client, p.status, p.created_at,
+            p.bill_rate_override::float AS bill_rate_override,
             COALESCE(pt.task_count,0)::int AS task_count,
             COALESCE(ps.total_days,0)::float AS total_days
      FROM projects p
@@ -135,7 +153,7 @@ export async function listProjects() {
 
 export async function getProject(id: number): Promise<Project | null> {
   const p = await queryOne<any>(
-    "SELECT id, name, client, description, status, created_at, updated_at FROM projects WHERE id=$1",
+    "SELECT id, name, client, description, status, bill_rate_override::float AS bill_rate_override, created_at, updated_at FROM projects WHERE id=$1",
     [id]
   );
   if (!p) return null;
@@ -157,12 +175,13 @@ export async function createProject(data: {
   client?: string;
   description?: string;
   status?: string;
+  bill_rate_override?: number | null;
   tasks?: Task[];
 }) {
   return withTransaction(async (c) => {
     const p = await c.query(
-      "INSERT INTO projects (name, client, description, status) VALUES ($1,$2,$3,$4) RETURNING id",
-      [data.name, data.client ?? "", data.description ?? "", data.status ?? "Draft"]
+      "INSERT INTO projects (name, client, description, status, bill_rate_override) VALUES ($1,$2,$3,$4,$5) RETURNING id",
+      [data.name, data.client ?? "", data.description ?? "", data.status ?? "Draft", data.bill_rate_override ?? null]
     );
     const id = p.rows[0].id;
     if (data.tasks?.length) await insertProjectTasks(c, id, data.tasks);
@@ -177,13 +196,14 @@ export async function updateProject(
     client?: string;
     description?: string;
     status?: string;
+    bill_rate_override?: number | null;
     tasks: Task[];
   }
 ) {
   return withTransaction(async (c) => {
     await c.query(
-      "UPDATE projects SET name=$1, client=$2, description=$3, status=$4, updated_at=now() WHERE id=$5",
-      [data.name, data.client ?? "", data.description ?? "", data.status ?? "Draft", id]
+      "UPDATE projects SET name=$1, client=$2, description=$3, status=$4, bill_rate_override=$5, updated_at=now() WHERE id=$6",
+      [data.name, data.client ?? "", data.description ?? "", data.status ?? "Draft", data.bill_rate_override ?? null, id]
     );
     await c.query("DELETE FROM project_tasks WHERE project_id=$1", [id]);
     await insertProjectTasks(c, id, data.tasks);

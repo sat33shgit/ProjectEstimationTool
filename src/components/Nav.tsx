@@ -7,6 +7,7 @@ const items = [
   { href: "/", label: "Dashboard", icon: "▣" },
   { href: "/templates", label: "Templates", icon: "▤" },
   { href: "/projects", label: "Projects", icon: "▦" },
+  { href: "/settings", label: "Settings", icon: "⚙" },
 ];
 
 export default function Nav() {

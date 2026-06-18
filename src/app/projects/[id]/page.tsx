@@ -27,6 +27,7 @@ export default function EditProjectPage() {
       initial={{
         name: initial.name,
         client: initial.client,
+        bill_rate_override: initial.bill_rate_override ?? null,
         tasks: initial.tasks,
       }}
     />

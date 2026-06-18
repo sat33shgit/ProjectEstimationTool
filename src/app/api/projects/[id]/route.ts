@@ -30,6 +30,7 @@ export async function PUT(
       client: body.client,
       description: body.description,
       status: body.status,
+      bill_rate_override: body.bill_rate_override ?? null,
       tasks: body.tasks ?? [],
     });
     return NextResponse.json({ ok: true });
