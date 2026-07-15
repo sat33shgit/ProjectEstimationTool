@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listProjects, createProject } from "@/lib/repo";
+import { validateProjectInput, errorResponse } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
@@ -7,27 +8,18 @@ export async function GET() {
   try {
     const data = await listProjects();
     return NextResponse.json(data);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    return errorResponse(e);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.name) {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
-    }
-    const id = await createProject({
-      name: body.name,
-      client: body.client,
-      description: body.description,
-      status: body.status,
-      bill_rate_override: body.bill_rate_override ?? null,
-      tasks: body.tasks ?? [],
-    });
+    const input = validateProjectInput(body);
+    const id = await createProject(input);
     return NextResponse.json({ id }, { status: 201 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    return errorResponse(e);
   }
 }

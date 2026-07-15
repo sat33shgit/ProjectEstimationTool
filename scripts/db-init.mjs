@@ -16,7 +16,7 @@ if (!connectionString) {
 const needsSsl = !/localhost|127\.0\.0\.1/.test(connectionString);
 const pool = new pg.Pool({
   connectionString,
-  ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+  ssl: needsSsl ? { rejectUnauthorized: true } : undefined,
 });
 
 const schema = readFileSync(join(__dirname, "..", "src", "lib", "schema.sql"), "utf8");

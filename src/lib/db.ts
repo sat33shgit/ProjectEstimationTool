@@ -21,7 +21,9 @@ export const pool: Pool =
   globalForPg._pgPool ??
   new Pool({
     connectionString,
-    ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+    // Verify the server certificate (prevents man-in-the-middle attacks).
+    // Managed providers like Neon/Vercel Postgres use publicly trusted certs.
+    ssl: needsSsl ? { rejectUnauthorized: true } : undefined,
     max: 5,
   });
 

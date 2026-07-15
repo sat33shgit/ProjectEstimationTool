@@ -1,52 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProject, updateProject, deleteProject } from "@/lib/repo";
+import { parseId, validateProjectInput, errorResponse } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const p = await getProject(Number(params.id));
+    const { id } = await params;
+    const p = await getProject(parseId(id));
     if (!p) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(p);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    return errorResponse(e);
   }
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const parsedId = parseId(id);
     const body = await req.json();
-    if (!body.name) {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
-    }
-    await updateProject(Number(params.id), {
-      name: body.name,
-      client: body.client,
-      description: body.description,
-      status: body.status,
-      bill_rate_override: body.bill_rate_override ?? null,
-      tasks: body.tasks ?? [],
-    });
+    const input = validateProjectInput(body);
+    await updateProject(parsedId, input);
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    return errorResponse(e);
   }
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await deleteProject(Number(params.id));
+    const { id } = await params;
+    await deleteProject(parseId(id));
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    return errorResponse(e);
   }
 }
