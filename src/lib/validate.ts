@@ -12,6 +12,12 @@ const MAX_RATE = 1000000;
 
 export class ValidationError extends Error {}
 
+/** Shorten a user-provided name so error messages stay readable. */
+function quote(value: string): string {
+  const v = value.trim();
+  return v.length > 40 ? v.slice(0, 40) + "…" : v;
+}
+
 /** Parse a route param as a positive integer id, or throw. */
 export function parseId(raw: string): number {
   const id = Number(raw);
@@ -45,46 +51,71 @@ function num(value: unknown, field: string, max: number): number {
 
 export function validateTasks(raw: unknown): Task[] {
   if (raw === undefined || raw === null) return [];
-  if (!Array.isArray(raw)) throw new ValidationError("tasks must be an array");
+  if (!Array.isArray(raw)) throw new ValidationError("The list of tasks is invalid");
   if (raw.length > MAX_TASKS) {
-    throw new ValidationError(`tasks must contain at most ${MAX_TASKS} items`);
+    throw new ValidationError(`You can add at most ${MAX_TASKS} tasks`);
   }
   return raw.map((t: any, ti: number): Task => {
     if (!t || typeof t !== "object") {
-      throw new ValidationError(`tasks[${ti}] must be an object`);
+      throw new ValidationError(`Task ${ti + 1} is invalid`);
     }
-    const name = str(t.name, `tasks[${ti}].name`, MAX_NAME, true);
+    // Reference the task by its actual name when it has one; otherwise by position.
+    const taskName = typeof t.name === "string" ? t.name.trim() : "";
+    const taskRef = taskName ? `"${quote(taskName)}"` : `task ${ti + 1}`;
+
+    if (!taskName) {
+      throw new ValidationError(`Please enter a name for task ${ti + 1}.`);
+    }
+    if (taskName.length > MAX_NAME) {
+      throw new ValidationError(
+        `The name for ${taskRef} must be at most ${MAX_NAME} characters.`
+      );
+    }
+
     const rawSubs = t.subtasks ?? [];
     if (!Array.isArray(rawSubs)) {
-      throw new ValidationError(`tasks[${ti}].subtasks must be an array`);
+      throw new ValidationError(`The subtasks for ${taskRef} are invalid.`);
     }
     if (rawSubs.length > MAX_SUBTASKS) {
       throw new ValidationError(
-        `tasks[${ti}].subtasks must contain at most ${MAX_SUBTASKS} items`
+        `${taskRef} can have at most ${MAX_SUBTASKS} subtasks.`
       );
     }
     const subtasks = rawSubs.map((s: any, si: number): Subtask => {
       if (!s || typeof s !== "object") {
-        throw new ValidationError(`tasks[${ti}].subtasks[${si}] must be an object`);
+        throw new ValidationError(`Subtask ${si + 1} in ${taskRef} is invalid.`);
+      }
+      const subName = typeof s.name === "string" ? s.name.trim() : "";
+      const subRef = subName ? `"${quote(subName)}"` : `subtask ${si + 1}`;
+
+      if (!subName) {
+        throw new ValidationError(
+          `Please enter a name for subtask ${si + 1} in ${taskRef}.`
+        );
+      }
+      if (subName.length > MAX_NAME) {
+        throw new ValidationError(
+          `The name for subtask ${subRef} in ${taskRef} must be at most ${MAX_NAME} characters.`
+        );
       }
       return {
-        name: str(s.name, `tasks[${ti}].subtasks[${si}].name`, MAX_NAME, true),
+        name: subName,
         estimate_days: num(
           s.estimate_days ?? 0,
-          `tasks[${ti}].subtasks[${si}].estimate_days`,
+          `The estimate for subtask ${subRef} in ${taskRef}`,
           MAX_ESTIMATE_DAYS
         ),
       };
     });
-    return { name, subtasks };
+    return { name: taskName, subtasks };
   });
 }
 
 export function validateTemplateInput(body: any) {
   if (!body || typeof body !== "object") throw new ValidationError("Invalid request body");
   return {
-    name: str(body.name, "name", MAX_NAME, true),
-    description: str(body.description, "description", MAX_DESCRIPTION),
+    name: str(body.name, "Name", MAX_NAME, true),
+    description: str(body.description, "Description", MAX_DESCRIPTION),
     tasks: validateTasks(body.tasks),
   };
 }
@@ -93,20 +124,20 @@ export function validateProjectInput(body: any) {
   if (!body || typeof body !== "object") throw new ValidationError("Invalid request body");
   let bill_rate_override: number | null = null;
   if (body.bill_rate_override !== undefined && body.bill_rate_override !== null && body.bill_rate_override !== "") {
-    bill_rate_override = num(body.bill_rate_override, "bill_rate_override", MAX_RATE);
+    bill_rate_override = num(body.bill_rate_override, "Bill rate", MAX_RATE);
   }
   return {
-    name: str(body.name, "name", MAX_NAME, true),
-    client: str(body.client, "client", MAX_NAME),
-    description: str(body.description, "description", MAX_DESCRIPTION),
-    status: str(body.status, "status", MAX_STATUS) || "Draft",
+    name: str(body.name, "Name", MAX_NAME, true),
+    client: str(body.client, "Client", MAX_NAME),
+    description: str(body.description, "Description", MAX_DESCRIPTION),
+    status: str(body.status, "Status", MAX_STATUS) || "Draft",
     bill_rate_override,
     tasks: validateTasks(body.tasks),
   };
 }
 
 export function validateBillRate(value: unknown): number {
-  return num(value, "bill_rate", MAX_RATE);
+  return num(value, "Bill rate", MAX_RATE);
 }
 
 /**

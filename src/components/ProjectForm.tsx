@@ -25,11 +25,13 @@ export default function ProjectForm({
   };
 }) {
   const router = useRouter();
+  const [currentId, setCurrentId] = useState<number | undefined>(id);
   const [name, setName] = useState(initial?.name ?? "");
   const [client, setClient] = useState(initial?.client ?? "");
   const [tasks, setTasks] = useState<Task[]>(initial?.tasks ?? []);
   const [showImport, setShowImport] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Billing
@@ -58,7 +60,7 @@ export default function ProjectForm({
     setShowImport(false);
   }
 
-  async function save() {
+  async function save(close: boolean) {
     if (!name.trim()) {
       setError("Project name is required.");
       return;
@@ -71,10 +73,23 @@ export default function ProjectForm({
           ? Number(overrideRaw)
           : null;
       const payload = { name, client, bill_rate_override, tasks };
-      if (id) await api.put(`/api/projects/${id}`, payload);
-      else await api.post("/api/projects", payload);
-      router.push("/projects");
+      if (currentId) {
+        await api.put(`/api/projects/${currentId}`, payload);
+      } else {
+        const { id: newId } = await api.post("/api/projects", payload);
+        setCurrentId(newId);
+        if (!close) {
+          // Keep editing the newly created project (further saves update it).
+          router.replace(`/projects/${newId}`);
+        }
+      }
       router.refresh();
+      if (close) {
+        router.push("/projects");
+      } else {
+        setJustSaved(true);
+        setTimeout(() => setJustSaved(false), 2000);
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -88,15 +103,21 @@ export default function ProjectForm({
   return (
     <div>
       <PageHeader
-        title={id ? "Edit project" : "New project"}
+        title={currentId ? "Edit project" : "New project"}
         subtitle="Build the estimate from scratch or import tasks from a template."
         action={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {justSaved && (
+              <span className="text-sm text-green-600 mr-1">Saved ✓</span>
+            )}
             <Button variant="secondary" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "Saving..." : "Save project"}
+            <Button variant="secondary" onClick={() => save(false)} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button onClick={() => save(true)} disabled={saving}>
+              Save and close
             </Button>
           </div>
         }

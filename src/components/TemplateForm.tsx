@@ -15,13 +15,15 @@ export default function TemplateForm({
   initial?: { name: string; description: string; tasks: Task[] };
 }) {
   const router = useRouter();
+  const [currentId, setCurrentId] = useState<number | undefined>(id);
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [tasks, setTasks] = useState<Task[]>(initial?.tasks ?? []);
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function save() {
+  async function save(close: boolean) {
     if (!name.trim()) {
       setError("Template name is required.");
       return;
@@ -30,10 +32,22 @@ export default function TemplateForm({
     setError(null);
     try {
       const payload = { name, description, tasks };
-      if (id) await api.put(`/api/templates/${id}`, payload);
-      else await api.post("/api/templates", payload);
-      router.push("/templates");
+      if (currentId) {
+        await api.put(`/api/templates/${currentId}`, payload);
+      } else {
+        const { id: newId } = await api.post("/api/templates", payload);
+        setCurrentId(newId);
+        if (!close) {
+          router.replace(`/templates/${newId}`);
+        }
+      }
       router.refresh();
+      if (close) {
+        router.push("/templates");
+      } else {
+        setJustSaved(true);
+        setTimeout(() => setJustSaved(false), 2000);
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -44,15 +58,21 @@ export default function TemplateForm({
   return (
     <div>
       <PageHeader
-        title={id ? "Edit template" : "New template"}
+        title={currentId ? "Edit template" : "New template"}
         subtitle="Define tasks and subtasks with default hour estimates."
         action={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {justSaved && (
+              <span className="text-sm text-green-600 mr-1">Saved ✓</span>
+            )}
             <Button variant="secondary" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button onClick={save} disabled={saving}>
-              {saving ? "Saving..." : "Save template"}
+            <Button variant="secondary" onClick={() => save(false)} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button onClick={() => save(true)} disabled={saving}>
+              Save and close
             </Button>
           </div>
         }
